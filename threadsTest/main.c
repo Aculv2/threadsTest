@@ -3,44 +3,65 @@
 #include <semaphore.h>
 #include <windows.h>
 
-void *bmp280(){
-    while(1) {
-        //measurepressure();
-        printf("bmp280 Bar\n");
-        Sleep(5000);
-    }
-};
+sem_t sem1,sem2,sem_start;
 
-void *bh1750(){
+void *bh1750(void *arg){
     while(1) {
-        //measureLuminosity();
+        sem_wait(&sem_start);
+        //lux = measureLuminosity();
         printf("bh1750 Lux\n");
-        Sleep(5000);
+        sem_post(&sem1);
     }
 };
 
-void *max7219(){
+void *bmp280(void *arg){
     while(1) {
-    LEDoutput();
-    LEDoutput();
+        sem_wait(&sem1);
+        //hPa = measurepressure();
+        printf("Bar\n");
+        sem_post(&sem2);
     }
 };
 
-sem_t s1;
+void *max7219(void *arg){
+    while(1) {
+        sem_wait(&sem2);
+        printf("Output\n");
+        //LEDoutput();
+        //LEDoutput();
+        Sleep(5000);
+        sem_post(&sem_start);
+    }
+};
+
+
 
 int main(int argc, char* argv[]) {
-    sem_init(&s1, 0, 1);   //erster parameter address der semaphore, zweiter 0 wenn ohne prozess gearbeitet wird
-    pthread_t p1, p2, p3;
-    if (pthread_create(&p1, NULL, &bmp280, NULL) != 0) {
-        return 1;
-    }
-    if (pthread_create(&p2, NULL, &bh1750, NULL) != 0) {
-        return 1;
-    }
-    if (pthread_create(&p3, NULL, &max7219, NULL) != 0) {
-        return 1;
-    }
 
-    sem_destroy(&s1);
+    int *lux;       //return value bh1750
+    double *hPa;    //return value bmp280
+
+    sem_init(&sem1, 0, 0);   //erster parameter address der semaphore, zweiter 0 wenn ohne prozess gearbeitet wird
+    sem_init(&sem2, 0, 0);
+    sem_init(&sem_start, 0, 1);
+
+    pthread_t t1, t2, t3;
+    if (pthread_create(&t1, NULL, &bh1750, &lux) != 0) {
+        return 1;
+    }
+    if (pthread_create(&t2, NULL, &bmp280, &hPa) != 0) {
+        return 1;
+    }
+    if (pthread_create(&t3, NULL, &max7219, NULL) != 0) {
+        return 1;
+    }
+    //printf("bmp280\n");
+    //printf("bh1750\n");
+
+    /*
+    sem_destroy(&sem1);
+    sem_destroy(&sem2);
+    sem_destroy(&sem_start);
+    */
     return 0;
 }
