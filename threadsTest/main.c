@@ -18,7 +18,7 @@ void *bmp280(void *arg){
     while(1) {
         sem_wait(&sem1);
         //hPa = measurepressure();
-        printf("Bar\n");
+        printf("bmp280 Bar\n");
         sem_post(&sem2);
     }
 };
@@ -26,7 +26,7 @@ void *bmp280(void *arg){
 void *max7219(void *arg){
     while(1) {
         sem_wait(&sem2);
-        printf("Output\n");
+        printf("LED Output\n");
         //LEDoutput();
         //LEDoutput();
         Sleep(5000);
@@ -55,8 +55,9 @@ int main(int argc, char* argv[]) {
     if (pthread_create(&t3, NULL, &max7219, NULL) != 0) {
         return 1;
     }
-    //printf("bmp280\n");
-    //printf("bh1750\n");
+    pthread_join(t3, NULL);
+    printf("bmp280\n");
+    printf("bh1750\n");
 
     /*
     sem_destroy(&sem1);
